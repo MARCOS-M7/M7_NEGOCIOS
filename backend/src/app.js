@@ -1,50 +1,40 @@
 
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
+import { sequelize } from './models/index.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
 import financialRoutes from './routes/financialRoutes.js';
 import crmRoutes from './routes/crmRoutes.js';
-import { sequelize } from './models/index.js';
+import rateLimiter from './middlewares/rateLimiter.js';
 
-// Carregar variáveis de ambiente
 dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 4000;
-
-// Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(morgan('dev'));
+app.use(rateLimiter);
 
-// Rotas
+// Rotas da API
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/financial', financialRoutes);
 app.use('/api/crm', crmRoutes);
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Servidor funcionando' });
+app.get('/health', (req, res) => res.json({ status: 'OK' }));
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: err.message });
 });
 
-// Iniciar servidor
-const startServer = async () => {
-  try {
-    // Sincronizar modelos com o banco de dados
-    await sequelize.sync({ alter: true });
-    console.log('Banco de dados sincronizado');
-    
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Servidor rodando em http://0.0.0.0:${PORT}`);
-    });
-  } catch (error) {
-    console.error('Erro ao iniciar servidor:', error);
-  }
-};
-
-startServer();
-
-export default app;
+const PORT = process.env.PORT || 4000;
+sequelize.sync().then(() => {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`M7NEG backend rodando na porta ${PORT}`);
+  });
+});
