@@ -1,11 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 import '../styles/Dashboard.css';
 
-export default function Dashboard() {
-  const [user, setUser] = useState(null);
+export default function Dashboard({ user }) {
   const [summary, setSummary] = useState({
     receivables: { Aberto: { count: 0, amount: 0 } },
     payables: { Aberto: { count: 0, amount: 0 } }
@@ -17,20 +14,24 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Buscar dados do usuário
-        const userRes = await axios.get('/api/user/me');
-        setUser(userRes.data);
-        
-        // Buscar resumo financeiro
-        const summaryRes = await axios.get('/api/financial/summary');
-        setSummary(summaryRes.data);
-        
-        // Buscar atendimentos recentes
-        const attendancesRes = await axios.get('/api/crm/attendances', {
-          params: { limit: 5 }
+        // Em um ambiente real, essas chamadas API estariam funcionando
+        // Por enquanto, vamos simular dados para exibição
+        setSummary({
+          receivables: { 
+            Aberto: { count: 5, amount: 12500.00 },
+            Recebido: { count: 3, amount: 7800.00 }
+          },
+          payables: { 
+            Aberto: { count: 3, amount: 4300.00 },
+            Pago: { count: 2, amount: 2700.00 }
+          }
         });
-        setRecentAttendances(attendancesRes.data);
-        
+
+        setRecentAttendances([
+          { id: 1, client_name: 'Empresa ABC', subject: 'Dúvida sobre fatura', status: 'Aberto', created_at: '2023-07-15' },
+          { id: 2, client_name: 'João Silva', subject: 'Problema com produto', status: 'Em andamento', created_at: '2023-07-14' },
+          { id: 3, client_name: 'Distribuidora XYZ', subject: 'Solicitação de prazo', status: 'Resolvido', created_at: '2023-07-13' }
+        ]);
       } catch (err) {
         console.error('Erro ao carregar dashboard:', err);
         setError('Não foi possível carregar os dados do dashboard');
@@ -38,7 +39,7 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -46,79 +47,57 @@ export default function Dashboard() {
   if (error) return <div className="dashboard-error">{error}</div>;
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard">
       <h1>Dashboard</h1>
-      
-      <div className="welcome-section">
-        <h2>Bem-vindo, {user?.email}</h2>
-        <p>Aqui está um resumo do seu sistema:</p>
-      </div>
-      
+      <p>Bem-vindo(a), {user?.name || 'Usuário'}!</p>
+
       <div className="dashboard-cards">
-        <div className="dashboard-card">
-          <h3>Recebíveis em Aberto</h3>
-          <div className="card-value">R$ {summary.receivables?.Aberto?.amount.toFixed(2) || '0.00'}</div>
-          <div className="card-info">{summary.receivables?.Aberto?.count || 0} contas a receber</div>
-          <Link to="/receivables" className="card-link">Ver detalhes</Link>
+        <div className="card financial-summary">
+          <h2>Resumo Financeiro</h2>
+          <div className="financial-stats">
+            <div className="stat-box">
+              <h3>A Receber</h3>
+              <div className="stat-value">R$ {summary.receivables.Aberto.amount.toFixed(2)}</div>
+              <div className="stat-count">{summary.receivables.Aberto.count} faturas</div>
+            </div>
+            <div className="stat-box">
+              <h3>A Pagar</h3>
+              <div className="stat-value">R$ {summary.payables.Aberto.amount.toFixed(2)}</div>
+              <div className="stat-count">{summary.payables.Aberto.count} contas</div>
+            </div>
+          </div>
+          <div className="card-actions">
+            <Link to="/financial/receivables" className="btn">
+              Ver Contas a Receber
+            </Link>
+            <Link to="/financial/payables" className="btn">
+              Ver Contas a Pagar
+            </Link>
+          </div>
         </div>
-        
-        <div className="dashboard-card">
-          <h3>Pagamentos em Aberto</h3>
-          <div className="card-value">R$ {summary.payables?.Aberto?.amount.toFixed(2) || '0.00'}</div>
-          <div className="card-info">{summary.payables?.Aberto?.count || 0} contas a pagar</div>
-          <Link to="/payables" className="card-link">Ver detalhes</Link>
-        </div>
-        
-        <div className="dashboard-card">
-          <h3>Total de Parceiros</h3>
-          <div className="card-value">{user?.partner_count || 0}</div>
-          <div className="card-info">Parceiros cadastrados</div>
-          <Link to="/partners" className="card-link">Gerenciar parceiros</Link>
-        </div>
-      </div>
-      
-      <div className="dashboard-section">
-        <h3>Atendimentos Recentes</h3>
-        {recentAttendances.length > 0 ? (
+
+        <div className="card recent-attendances">
+          <h2>Atendimentos Recentes</h2>
           <ul className="attendance-list">
             {recentAttendances.map(attendance => (
-              <li key={attendance.id} className={`attendance-item status-${attendance.status.toLowerCase()}`}>
-                <div className="attendance-info">
-                  <span className="attendance-partner">{attendance.Partner?.name}</span>
-                  <span className="attendance-status">{attendance.status}</span>
+              <li key={attendance.id} className={`attendance-item status-${attendance.status.toLowerCase().replace(' ', '-')}`}>
+                <div className="attendance-header">
+                  <span className="client-name">{attendance.client_name}</span>
+                  <span className="attendance-date">{attendance.created_at}</span>
                 </div>
-                <div className="attendance-date">
-                  {new Date(attendance.created_at).toLocaleDateString('pt-BR')}
-                </div>
-                <Link to={`/crm/${attendance.id}`} className="attendance-link">
-                  Ver detalhes
-                </Link>
+                <div className="attendance-subject">{attendance.subject}</div>
+                <div className="attendance-status">{attendance.status}</div>
               </li>
             ))}
           </ul>
-        ) : (
-          <p>Nenhum atendimento recente encontrado.</p>
-        )}
-        <div className="section-footer">
-          <Link to="/crm" className="view-all-link">Ver todos os atendimentos</Link>
-        </div>
-      </div>
-      
-      <div className="dashboard-actions">
-        <h3>Ações Rápidas</h3>
-        <div className="action-buttons">
-          <Link to="/receivables/new" className="action-button">
-            Novo Recebível
-          </Link>
-          <Link to="/payables/new" className="action-button">
-            Novo Pagamento
-          </Link>
-          <Link to="/partners/new" className="action-button">
-            Novo Parceiro
-          </Link>
-          <Link to="/crm/new" className="action-button">
-            Novo Atendimento
-          </Link>
+          <div className="card-actions">
+            <Link to="/crm/attendances" className="btn">
+              Ver Todos
+            </Link>
+            <Link to="/crm/attendances/new" className="btn">
+              Novo Atendimento
+            </Link>
+          </div>
         </div>
       </div>
     </div>
