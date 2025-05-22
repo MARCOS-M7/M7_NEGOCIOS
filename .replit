@@ -43,7 +43,3 @@ args = "cd frontend && npm install && npm start"
 [[ports]]
 localPort = 3000
 externalPort = 80
-
-[[ports]]
-localPort = 4000
-externalPort = 4000
