@@ -1,0 +1,430 @@
+================================================================================
+1. database/schema.sql
+================================================================================
+-- Estrutura do banco de dados M7 NEG (PostgreSQL)
+-- Partners
+CREATE TABLE partners (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  document VARCHAR(18) UNIQUE,
+  type VARCHAR(10) NOT NULL,
+  parent_id INT REFERENCES partners(id),
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Users
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role VARCHAR(30) NOT NULL,
+  partner_id INT REFERENCES partners(id),
+  status VARCHAR(20) DEFAULT 'pending',
+  permissions JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Receivables
+CREATE TABLE receivables (
+  id SERIAL PRIMARY KEY,
+  partner_id INT REFERENCES partners(id),
+  invoice_number VARCHAR(40),
+  issue_date DATE,
+  due_date DATE,
+  gross_amount NUMERIC(15,2),
+  commission_rate NUMERIC(5,2),
+  commission_amount NUMERIC(15,2),
+  net_amount NUMERIC(15,2),
+  status VARCHAR(20) DEFAULT 'Aberto',
+  date_received DATE,
+  attachments JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Payables
+CREATE TABLE payables (
+  id SERIAL PRIMARY KEY,
+  partner_id INT REFERENCES partners(id),
+  doc_number VARCHAR(40),
+  issue_date DATE,
+  due_date DATE,
+  amount NUMERIC(15,2),
+  status VARCHAR(20) DEFAULT 'Aberto',
+  attachments JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- CRM Atendimentos
+CREATE TABLE attendimentos (
+  id SERIAL PRIMARY KEY,
+  partner_id INT REFERENCES partners(id),
+  status VARCHAR(30) DEFAULT 'Aguardando',
+  logs JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Auditoria
+CREATE TABLE audit_logs (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id),
+  table_name TEXT,
+  action TEXT,
+  record_id INT,
+  changes JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Notificações
+CREATE TABLE notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id),
+  message TEXT,
+  type VARCHAR(20),
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Triggers de comissão/auditoria
+CREATE OR REPLACE FUNCTION calc_commission() RETURNS TRIGGER AS $$
+BEGIN
+  NEW.commission_amount := (NEW.gross_amount * NEW.commission_rate) / 100;
+  NEW.net_amount := NEW.gross_amount - NEW.commission_amount;
+  RETURN NEW;
+END; $$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_commission BEFORE INSERT OR UPDATE ON receivables FOR EACH ROW EXECUTE FUNCTION calc_commission();
+
+CREATE OR REPLACE FUNCTION log_audit() RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (user_id, table_name, action, record_id, changes, created_at)
+  VALUES (COALESCE(current_setting('app.current_user_id', true)::int, NULL), TG_TABLE_NAME, TG_OP, NEW.id, to_jsonb(NEW), NOW());
+  RETURN NEW;
+END; $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_audit_partners AFTER INSERT OR UPDATE ON partners FOR EACH ROW EXECUTE FUNCTION log_audit();
+CREATE TRIGGER trg_audit_users AFTER INSERT OR UPDATE ON users FOR EACH ROW EXECUTE FUNCTION log_audit();
+CREATE TRIGGER trg_audit_receivables AFTER INSERT OR UPDATE ON receivables FOR EACH ROW EXECUTE FUNCTION log_audit();
+CREATE TRIGGER trg_audit_payables AFTER INSERT OR UPDATE ON payables FOR EACH ROW EXECUTE FUNCTION log_audit();
+
+================================================================================
+2. backend/.env
+================================================================================
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=postgres
+DB_NAME=m7neg
+JWT_SECRET=changeme123
+JWT_EXPIRES_IN=1d
+SMTP_HOST=srv26.prodns.com.br
+SMTP_PORT=587
+SMTP_USER=comercial@m7empreendimentos.com.br
+SMTP_PASSWORD=m7*kal1de?
+WHATSAPP_QR_URL=https://api.whatsapp.com/send?phone=
+OPENAI_API_KEY=YOUR_OPENAI_KEY
+RECEITAWS_TOKEN=YOUR_RECEITAWS_TOKEN
+
+================================================================================
+3. backend/package.json
+================================================================================
+{
+  "name": "m7neg-backend",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5",
+    "nodemailer": "^6.9.0",
+    "pg": "^8.7.3",
+    "pdfkit": "^0.13.0",
+    "sequelize": "^6.29.3"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "supertest": "^6.3.3",
+    "nodemon": "^2.0.22"
+  }
+}
+
+================================================================================
+4. backend/src/app.js
+================================================================================
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+import { sequelize } from './models/index.js';
+import authRoutes from './routes/authRoutes.js';
+import rateLimiter from './middlewares/rateLimiter.js';
+
+dotenv.config();
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
+app.use(rateLimiter);
+app.use('/api/auth', authRoutes);
+
+app.get('/health', (req, res) => res.json({ status: 'OK' }));
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: err.message });
+});
+
+const PORT = process.env.PORT || 4000;
+sequelize.sync().then(() => {
+  app.listen(PORT, () => {
+    console.log(`M7NEG backend rodando na porta ${PORT}`);
+  });
+});
+
+================================================================================
+5. backend/src/models/index.js
+================================================================================
+import { Sequelize } from "sequelize";
+export const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASS,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: 'postgres',
+    logging: false,
+  }
+);
+
+================================================================================
+6. backend/src/models/user.js
+================================================================================
+import { DataTypes } from "sequelize";
+import { sequelize } from "./index.js";
+export const User = sequelize.define('User', {
+  email: { type: DataTypes.STRING, unique: true, allowNull: false },
+  password_hash: { type: DataTypes.STRING, allowNull: false },
+  role: { type: DataTypes.STRING, allowNull: false },
+  partner_id: { type: DataTypes.INTEGER, allowNull: true },
+  status: { type: DataTypes.STRING, defaultValue: 'pending' },
+  permissions: { type: DataTypes.JSONB, allowNull: true },
+}, { tableName: 'users', timestamps: true, createdAt: 'created_at', updatedAt: false });
+
+================================================================================
+7. backend/src/middlewares/auth.js
+================================================================================
+import jwt from 'jsonwebtoken';
+export default (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Token não fornecido' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Token inválido' });
+  }
+};
+
+================================================================================
+8. backend/src/middlewares/rateLimiter.js
+================================================================================
+import rateLimit from 'express-rate-limit';
+export default rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Muitas requisições, tente novamente em breve."
+});
+
+================================================================================
+9. backend/src/controllers/authController.js
+================================================================================
+import { User } from '../models/user.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+export const register = async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({ email, password_hash: hash, role });
+    res.status(201).json({ id: user.id, email: user.email });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Senha inválida' });
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    res.json({ token });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+================================================================================
+10. backend/src/routes/authRoutes.js
+================================================================================
+import express from 'express';
+import * as authController from '../controllers/authController.js';
+const router = express.Router();
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+export default router;
+
+================================================================================
+11. frontend/.env
+================================================================================
+REACT_APP_API_URL=http://localhost:4000/api
+
+================================================================================
+12. frontend/package.json
+================================================================================
+{
+  "name": "m7neg-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.6.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-scripts": "5.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  }
+}
+
+================================================================================
+13. frontend/src/components/LoginForm.jsx
+================================================================================
+import React, { useState } from 'react';
+import axios from 'axios';
+export default function LoginForm({ onLogin }) {
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [erro, setErro] = useState('');
+  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleSubmit = async e => {
+    e.preventDefault();
+    try {
+      const res = await axios.post('/api/auth/login', form);
+      localStorage.setItem('token', res.data.token);
+      onLogin();
+    } catch {
+      setErro('Login inválido');
+    }
+  };
+  return (
+    <form onSubmit={handleSubmit}>
+      <input name="email" placeholder="E-mail" onChange={handleChange} required />
+      <input name="password" type="password" placeholder="Senha" onChange={handleChange} required />
+      <button type="submit">Entrar</button>
+      {erro && <div>{erro}</div>}
+    </form>
+  );
+}
+
+================================================================================
+14. frontend/src/components/FileUploader.jsx
+================================================================================
+import React, { useState } from 'react';
+import axios from 'axios';
+export default function FileUploader() {
+  const [file, setFile] = useState(null);
+  const handleChange = e => setFile(e.target.files[0]);
+  const handleUpload = async () => {
+    const formData = new FormData();
+    formData.append('file', file);
+    await axios.post('/api/upload', formData, {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+    });
+    alert('Arquivo enviado!');
+  };
+  return (
+    <div>
+      <input type="file" onChange={handleChange} />
+      <button onClick={handleUpload}>Enviar</button>
+    </div>
+  );
+}
+
+================================================================================
+15. frontend/src/components/Notifications.jsx
+================================================================================
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+export default function Notifications() {
+  const [notifications, setNotifications] = useState([]);
+  useEffect(() => {
+    axios.get('/api/notifications', {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+    }).then(res => setNotifications(res.data));
+  }, []);
+  return (
+    <ul>
+      {notifications.map(n => (
+        <li key={n.id}>
+          {n.message} {n.read ? '' : <b>(novo)</b>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+================================================================================
+16. backend/Dockerfile
+================================================================================
+FROM node:18
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 4000
+CMD ["npm", "start"]
+
+================================================================================
+17. docker-compose.yml
+================================================================================
+version: "3.9"
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: m7neg
+    ports: ["5432:5432"]
+    volumes: [db_data:/var/lib/postgresql/data]
+  backend:
+    build: ./backend
+    ports: ["4000:4000"]
+    depends_on: [db]
+    environment:
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_NAME=m7neg
+      - JWT_SECRET=changeme123
+volumes:
+  db_data:
+
+================================================================================
+18. README.md
+================================================================================
+# M7 NEG
+
+Sistema completo de gestão financeira, parceiros, contratos e CRM.
+
+## Instalação rápida (Docker)
+```sh
+docker-compose up --build
