@@ -1,61 +1,75 @@
+
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FaHome, FaUsers, FaMoneyBillWave, FaHeadset, FaChartBar, FaCog } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import '../../styles/Sidebar.css';
 
-const Sidebar = () => {
-  const location = useLocation();
-
+function Sidebar({ user }) {
+  // Se não tiver usuário logado, não mostra o sidebar
+  if (!user) return null;
+  
+  // Definir menus baseados no perfil do usuário
+  const isAdmin = user.role === 'admin';
+  
   return (
     <aside className="sidebar">
       <nav className="sidebar-nav">
         <ul>
           <li>
-            <Link to="/" className={location.pathname === '/' ? 'nav-item active' : 'nav-item'}>
-              <FaHome />
+            <Link to="/dashboard" className="nav-link">
+              <i className="fas fa-tachometer-alt"></i>
               <span>Dashboard</span>
             </Link>
           </li>
+          
           <li>
-            <Link to="/partners" className={location.pathname.startsWith('/partners') ? 'nav-item active' : 'nav-item'}>
-              <FaUsers />
+            <Link to="/partners" className="nav-link">
+              <i className="fas fa-handshake"></i>
               <span>Parceiros</span>
             </Link>
           </li>
+          
           <li>
-            <Link to="/financial/receivables" className={location.pathname.includes('/receivables') ? 'nav-item active' : 'nav-item'}>
-              <FaMoneyBillWave />
+            <Link to="/financial/receivables" className="nav-link">
+              <i className="fas fa-money-bill-wave"></i>
               <span>Contas a Receber</span>
             </Link>
           </li>
+          
           <li>
-            <Link to="/financial/payables" className={location.pathname.includes('/payables') ? 'nav-item active' : 'nav-item'}>
-              <FaMoneyBillWave />
+            <Link to="/financial/payables" className="nav-link">
+              <i className="fas fa-file-invoice-dollar"></i>
               <span>Contas a Pagar</span>
             </Link>
           </li>
+          
           <li>
-            <Link to="/crm" className={location.pathname.startsWith('/crm') ? 'nav-item active' : 'nav-item'}>
-              <FaHeadset />
-              <span>CRM</span>
+            <Link to="/crm" className="nav-link">
+              <i className="fas fa-comments"></i>
+              <span>Atendimentos</span>
             </Link>
           </li>
-          <li>
-            <Link to="/reports" className={location.pathname.startsWith('/reports') ? 'nav-item active' : 'nav-item'}>
-              <FaChartBar />
-              <span>Relatórios</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/settings" className={location.pathname.startsWith('/settings') ? 'nav-item active' : 'nav-item'}>
-              <FaCog />
-              <span>Configurações</span>
-            </Link>
-          </li>
+          
+          {isAdmin && (
+            <li>
+              <Link to="/users" className="nav-link">
+                <i className="fas fa-users"></i>
+                <span>Usuários</span>
+              </Link>
+            </li>
+          )}
+          
+          {isAdmin && (
+            <li>
+              <Link to="/reports" className="nav-link">
+                <i className="fas fa-chart-bar"></i>
+                <span>Relatórios</span>
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
     </aside>
   );
-};
+}
 
 export default Sidebar;

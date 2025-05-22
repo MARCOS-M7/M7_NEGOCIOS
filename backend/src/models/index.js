@@ -44,11 +44,23 @@ export const testConnection = async () => {
   }
 };
 
-// Definir modelos
-export { User } from './user.js';
-export { Partner } from './partner.js';
-export { Attendance } from './attendance.js';
-export { AuditLog } from './auditLog.js';
-export { Payable } from './payable.js';
-export { Receivable } from './receivable.js';
-export { Notification } from './notification.js';
+// Importar e associar os modelos
+import User from './user.js';
+import Partner from './partner.js';
+import Notification from './notification.js';
+import Attendance from './attendance.js';
+import AuditLog from './auditLog.js';
+import Payable from './payable.js';
+import Receivable from './receivable.js';
+
+// Exportar todos os modelos
+export { 
+  User, 
+  Partner, 
+  Attendance, 
+  AuditLog, 
+  Payable, 
+  Receivable 
+};
+
+export { default as Notification } from './notification.js';
