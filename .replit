@@ -34,11 +34,11 @@ mode = "parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd backend && npm install && npm start"
+args = "cd backend && npm install && NODE_ENV=development npm start"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && npm install && npm start"
+args = "cd frontend && npm install && REACT_APP_API_URL=http://localhost:4000/api npm start"
 
 [[ports]]
 localPort = 3000

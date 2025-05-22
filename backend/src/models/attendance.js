@@ -2,7 +2,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "./index.js";
 
-export const Attendance = sequelize.define('Attendance', {
+const Attendance = sequelize.define('Attendance', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -26,3 +26,6 @@ export const Attendance = sequelize.define('Attendance', {
   createdAt: 'created_at', 
   updatedAt: false 
 });
+
+export { Attendance };
+export default Attendance;
