@@ -1,36 +1,54 @@
 
-import { DataTypes } from "sequelize";
-import { sequelize } from "./index.js";
+import { DataTypes } from 'sequelize';
+import { sequelize } from './index.js';
 
-export const AuditLog = sequelize.define('AuditLog', {
+const AuditLog = sequelize.define('AuditLog', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
-  user_id: { 
-    type: DataTypes.INTEGER, 
-    allowNull: true 
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
-  table_name: { 
-    type: DataTypes.TEXT, 
-    allowNull: false 
+  action: {
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  action: { 
-    type: DataTypes.TEXT, 
-    allowNull: false 
+  table: {
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  record_id: { 
-    type: DataTypes.INTEGER, 
-    allowNull: false 
+  record_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
-  changes: { 
-    type: DataTypes.JSONB, 
-    allowNull: true 
+  old_values: {
+    type: DataTypes.JSONB,
+    allowNull: true
+  },
+  new_values: {
+    type: DataTypes.JSONB,
+    allowNull: true
+  },
+  ip_address: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  created_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
-}, { 
-  tableName: 'audit_logs', 
-  timestamps: true, 
-  createdAt: 'created_at', 
-  updatedAt: false 
+}, {
+  tableName: 'audit_logs',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: false
 });
+
+export default AuditLog;

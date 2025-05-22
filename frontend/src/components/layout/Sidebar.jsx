@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/Sidebar.css';
@@ -9,7 +8,7 @@ function Sidebar({ user }) {
   
   // Definir menus baseados no perfil do usuário
   const isAdmin = user.role === 'admin';
-  
+
   return (
     <aside className="sidebar">
       <nav className="sidebar-nav">
