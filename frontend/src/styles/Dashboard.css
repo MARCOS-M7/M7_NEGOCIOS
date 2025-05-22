@@ -1,0 +1,213 @@
+
+.dashboard-container {
+  padding: 1.5rem;
+}
+
+.dashboard-container h1 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+}
+
+.welcome-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.welcome-section h2 {
+  color: #3498db;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.dashboard-card h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3498db;
+  margin-bottom: 0.5rem;
+}
+
+.card-info {
+  color: #7f8c8d;
+  margin-bottom: 1rem;
+}
+
+.card-link {
+  display: inline-block;
+  color: #3498db;
+  font-weight: 500;
+}
+
+.dashboard-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-section h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.attendance-list {
+  list-style: none;
+}
+
+.attendance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #ecf0f1;
+  transition: background-color 0.3s ease;
+}
+
+.attendance-item:hover {
+  background-color: #f9f9f9;
+}
+
+.attendance-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.attendance-partner {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.attendance-status {
+  font-size: 0.85rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 20px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.status-aguardando .attendance-status {
+  background-color: #f39c12;
+  color: white;
+}
+
+.status-andamento .attendance-status {
+  background-color: #3498db;
+  color: white;
+}
+
+.status-concluído .attendance-status {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.attendance-date {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.attendance-link {
+  color: #3498db;
+  font-weight: 500;
+}
+
+.section-footer {
+  margin-top: 1rem;
+  text-align: right;
+}
+
+.view-all-link {
+  color: #3498db;
+  font-weight: 500;
+}
+
+.dashboard-actions {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.action-button {
+  display: block;
+  padding: 1rem;
+  text-align: center;
+  background-color: #3498db;
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.action-button:hover {
+  background-color: #2980b9;
+  transform: translateY(-3px);
+  text-decoration: none;
+}
+
+.dashboard-loading, .dashboard-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.2rem;
+}
+
+.dashboard-error {
+  color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .attendance-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .attendance-date, .attendance-link {
+    margin-top: 0.5rem;
+  }
+}
