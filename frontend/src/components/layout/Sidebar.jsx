@@ -1,0 +1,71 @@
+
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { FaHome, FaUsers, FaMoneyBillWave, FaHeadset, FaChartBar, FaCog } from 'react-icons/fa';
+import '../../styles/Sidebar.css';
+
+const Sidebar = ({ user }) => {
+  const location = useLocation();
+  
+  const isAdmin = user && user.role === 'admin';
+  
+  const isActive = (path) => {
+    return location.pathname === path ? 'active' : '';
+  };
+
+  return (
+    <aside className="sidebar">
+      <nav className="sidebar-nav">
+        <ul>
+          <li className={isActive('/')}>
+            <Link to="/">
+              <FaHome />
+              <span>Dashboard</span>
+            </Link>
+          </li>
+          <li className={location.pathname.includes('/partners') ? 'active' : ''}>
+            <Link to="/partners">
+              <FaUsers />
+              <span>Parceiros</span>
+            </Link>
+          </li>
+          <li className={location.pathname.includes('/receivables') ? 'active' : ''}>
+            <Link to="/receivables">
+              <FaMoneyBillWave />
+              <span>Recebíveis</span>
+            </Link>
+          </li>
+          <li className={location.pathname.includes('/payables') ? 'active' : ''}>
+            <Link to="/payables">
+              <FaMoneyBillWave />
+              <span>Pagamentos</span>
+            </Link>
+          </li>
+          <li className={location.pathname.includes('/crm') ? 'active' : ''}>
+            <Link to="/crm">
+              <FaHeadset />
+              <span>Atendimentos</span>
+            </Link>
+          </li>
+          <li className={location.pathname.includes('/reports') ? 'active' : ''}>
+            <Link to="/reports">
+              <FaChartBar />
+              <span>Relatórios</span>
+            </Link>
+          </li>
+          
+          {isAdmin && (
+            <li className={location.pathname.includes('/users') ? 'active' : ''}>
+              <Link to="/users">
+                <FaCog />
+                <span>Usuários</span>
+              </Link>
+            </li>
+          )}
+        </ul>
+      </nav>
+    </aside>
+  );
+};
+
+export default Sidebar;
