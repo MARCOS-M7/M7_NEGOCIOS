@@ -61,4 +61,13 @@ export const initDatabase = async () => {
 };
 
 // Importar e associar os modelos
-// As importações serão feitas nos respectivos arquivos dos modelos para evitar dependências circulares
+import User from './user.js';
+import Partner from './partner.js';
+import Notification from './notification.js';
+import Attendance from './attendance.js';
+import AuditLog from './auditLog.js';
+import Payable from './payable.js';
+import Receivable from './receivable.js';
+
+// Exportar todos os modelos
+export { User, Partner, Notification, Attendance, AuditLog, Payable, Receivable };
