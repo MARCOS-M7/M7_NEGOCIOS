@@ -1,14 +1,9 @@
-entrypoint = "main.py"
-modules = ["nodejs-20", "python-3.11"]
+
+entrypoint = "index.js"
+modules = ["nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
-
-[unitTest]
-language = "python3"
-
-[gitHubImport]
-requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
 run = ["sh", "-c", "cd backend && npm install && npm start"]
@@ -19,7 +14,6 @@ runButton = "Start Full System"
 
 [[workflows.workflow]]
 name = "Run Backend"
-author = 42744750
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -28,7 +22,6 @@ args = "cd backend && npm install && npm start"
 
 [[workflows.workflow]]
 name = "Run Frontend"
-author = 42744750
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -37,7 +30,6 @@ args = "cd frontend && npm install && npm start"
 
 [[workflows.workflow]]
 name = "Start Full System"
-author = 42744750
 mode = "parallel"
 
 [[workflows.workflow.tasks]]
@@ -51,3 +43,7 @@ args = "cd frontend && npm install && npm start"
 [[ports]]
 localPort = 3000
 externalPort = 80
+
+[[ports]]
+localPort = 4000
+externalPort = 4000

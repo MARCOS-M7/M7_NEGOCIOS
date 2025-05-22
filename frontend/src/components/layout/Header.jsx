@@ -1,16 +1,9 @@
-
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import '../../styles/Header.css';
+import { FaUserCircle, FaCog, FaSignOutAlt } from 'react-icons/fa';
 
-const Header = ({ user }) => {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
-
+const Header = ({ user, onLogout }) => {
   return (
     <header className="header">
       <div className="header-container">
@@ -19,56 +12,30 @@ const Header = ({ user }) => {
             <h1>M7<span>NEG</span></h1>
           </Link>
         </div>
-        
-        {user && (
+
+        {user ? (
           <div className="user-menu">
             <div className="user-info">
-              <span className="user-name">{user.name || user.email}</span>
-              <span className="user-role">{user.role}</span>
+              <span className="user-name">{user.name}</span>
+              <span className="user-role">{user.role || 'Usuário'}</span>
             </div>
+            <FaUserCircle size={24} />
+
             <div className="dropdown-menu">
-              <Link to="/profile" className="dropdown-item">Meu Perfil</Link>
-              <button onClick={handleLogout} className="dropdown-item logout-btn">Sair</button>
+              <Link to="/profile" className="dropdown-item">
+                <FaUserCircle /> Perfil
+              </Link>
+              <Link to="/settings" className="dropdown-item">
+                <FaCog /> Configurações
+              </Link>
+              <button onClick={onLogout} className="dropdown-item logout-btn">
+                <FaSignOutAlt /> Sair
+              </button>
             </div>
           </div>
+        ) : (
+          <Link to="/login" className="login-button">Entrar</Link>
         )}
-      </div>
-    </header>
-  );
-};
-
-export default Header;
-import React from 'react';
-import { Link } from 'react-router-dom';
-import '../../styles/Header.css';
-
-const Header = ({ user }) => {
-  return (
-    <header className="app-header">
-      <div className="header-container">
-        <div className="logo">
-          <Link to="/">M7 NEG</Link>
-        </div>
-        
-        <div className="user-menu">
-          {user ? (
-            <>
-              <span className="user-name">Olá, {user.name || 'Usuário'}</span>
-              <div className="dropdown">
-                <button className="dropdown-button">
-                  <i className="fas fa-user-circle"></i>
-                </button>
-                <div className="dropdown-content">
-                  <Link to="/profile">Meu Perfil</Link>
-                  <Link to="/settings">Configurações</Link>
-                  <button className="logout-button">Sair</button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <Link to="/login" className="login-button">Entrar</Link>
-          )}
-        </div>
       </div>
     </header>
   );

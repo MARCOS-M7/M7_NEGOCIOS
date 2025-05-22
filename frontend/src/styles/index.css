@@ -1,14 +1,16 @@
+
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background-color: #f5f5f5;
   color: #333;
-  line-height: 1.6;
 }
 
 .app {
@@ -20,42 +22,64 @@ body {
 .main-container {
   display: flex;
   flex: 1;
+  margin-top: 60px;
 }
 
 .content {
   flex: 1;
   padding: 20px;
+  margin-left: 240px;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  margin-bottom: 0.5rem;
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #3498db;
+}
+
+button {
+  cursor: pointer;
 }
 
 a {
-  color: #3498db;
   text-decoration: none;
+  color: inherit;
 }
 
-a:hover {
-  text-decoration: underline;
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
 }
 
 .btn {
-  display: inline-block;
+  padding: 10px 15px;
   background-color: #3498db;
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 0.5rem 1rem;
+  font-size: 1rem;
   cursor: pointer;
-  font-size: 0.9rem;
-  text-decoration: none;
-  transition: background-color 0.2s;
+  transition: background-color 0.3s;
 }
 
 .btn:hover {
   background-color: #2980b9;
-  text-decoration: none;
 }
 
 .btn-secondary {
@@ -66,14 +90,6 @@ a:hover {
   background-color: #7f8c8d;
 }
 
-.btn-success {
-  background-color: #2ecc71;
-}
-
-.btn-success:hover {
-  background-color: #27ae60;
-}
-
 .btn-danger {
   background-color: #e74c3c;
 }
@@ -82,16 +98,35 @@ a:hover {
   background-color: #c0392b;
 }
 
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-size: 1.5rem;
-  color: #7f8c8d;
+.alert {
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
 }
 
 @media (max-width: 768px) {
+  .content {
+    margin-left: 0;
+  }
+  
   .main-container {
     flex-direction: column;
   }

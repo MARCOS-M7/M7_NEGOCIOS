@@ -1,105 +1,173 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import '../styles/Dashboard.css';
 
-export default function Dashboard({ user }) {
+import React, { useState, useEffect } from 'react';
+import '../styles/Dashboard.css';
+import { FaUsers, FaMoneyBillWave, FaHeadset, FaChartPie } from 'react-icons/fa';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
+import { Pie, Line } from 'react-chartjs-2';
+
+// Registrar componentes do ChartJS
+ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+const Dashboard = ({ user }) => {
   const [summary, setSummary] = useState({
-    receivables: { Aberto: { count: 0, amount: 0 } },
-    payables: { Aberto: { count: 0, amount: 0 } }
+    partners: { total: 0, active: 0 },
+    financial: { 
+      receivables: { open: 0, overdue: 0, paid: 0 },
+      payables: { open: 0, overdue: 0, paid: 0 }
+    },
+    attendance: { open: 0, inProgress: 0, closed: 0 }
   });
-  const [recentAttendances, setRecentAttendances] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Em um ambiente real, essas chamadas API estariam funcionando
-        // Por enquanto, vamos simular dados para exibição
-        setSummary({
-          receivables: { 
-            Aberto: { count: 5, amount: 12500.00 },
-            Recebido: { count: 3, amount: 7800.00 }
-          },
-          payables: { 
-            Aberto: { count: 3, amount: 4300.00 },
-            Pago: { count: 2, amount: 2700.00 }
-          }
-        });
-
-        setRecentAttendances([
-          { id: 1, client_name: 'Empresa ABC', subject: 'Dúvida sobre fatura', status: 'Aberto', created_at: '2023-07-15' },
-          { id: 2, client_name: 'João Silva', subject: 'Problema com produto', status: 'Em andamento', created_at: '2023-07-14' },
-          { id: 3, client_name: 'Distribuidora XYZ', subject: 'Solicitação de prazo', status: 'Resolvido', created_at: '2023-07-13' }
-        ]);
-      } catch (err) {
-        console.error('Erro ao carregar dashboard:', err);
-        setError('Não foi possível carregar os dados do dashboard');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    // Aqui você faria chamadas à API para obter os dados reais
+    // Por enquanto, vamos usar dados simulados
+    setSummary({
+      partners: { total: 42, active: 38 },
+      financial: { 
+        receivables: { open: 12, overdue: 3, paid: 78 },
+        payables: { open: 8, overdue: 1, paid: 45 }
+      },
+      attendance: { open: 5, inProgress: 3, closed: 27 }
+    });
   }, []);
 
-  if (loading) return <div className="dashboard-loading">Carregando dados...</div>;
-  if (error) return <div className="dashboard-error">{error}</div>;
+  const financialData = {
+    labels: ['A Receber', 'Recebido', 'A Pagar', 'Pago'],
+    datasets: [
+      {
+        label: 'Valores (R$)',
+        data: [
+          summary.financial.receivables.open + summary.financial.receivables.overdue,
+          summary.financial.receivables.paid,
+          summary.financial.payables.open + summary.financial.payables.overdue,
+          summary.financial.payables.paid
+        ],
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(153, 102, 255, 0.6)'
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(153, 102, 255, 1)'
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Dados simulados para o gráfico de linha
+  const monthlyData = {
+    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+    datasets: [
+      {
+        label: 'Receitas',
+        data: [12000, 19000, 15000, 25000, 22000, 30000],
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+      },
+      {
+        label: 'Despesas',
+        data: [8000, 12000, 10000, 18000, 15000, 20000],
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      },
+    ],
+  };
 
   return (
     <div className="dashboard">
       <h1>Dashboard</h1>
-      <p>Bem-vindo(a), {user?.name || 'Usuário'}!</p>
-
-      <div className="dashboard-cards">
-        <div className="card financial-summary">
-          <h2>Resumo Financeiro</h2>
-          <div className="financial-stats">
-            <div className="stat-box">
-              <h3>A Receber</h3>
-              <div className="stat-value">R$ {summary.receivables.Aberto.amount.toFixed(2)}</div>
-              <div className="stat-count">{summary.receivables.Aberto.count} faturas</div>
-            </div>
-            <div className="stat-box">
-              <h3>A Pagar</h3>
-              <div className="stat-value">R$ {summary.payables.Aberto.amount.toFixed(2)}</div>
-              <div className="stat-count">{summary.payables.Aberto.count} contas</div>
-            </div>
+      <p className="welcome-message">Bem-vindo, {user?.name || 'Usuário'}!</p>
+      
+      <div className="dashboard-summary">
+        <div className="summary-card">
+          <div className="card-icon partners">
+            <FaUsers />
           </div>
-          <div className="card-actions">
-            <Link to="/financial/receivables" className="btn">
-              Ver Contas a Receber
-            </Link>
-            <Link to="/financial/payables" className="btn">
-              Ver Contas a Pagar
-            </Link>
+          <div className="card-content">
+            <h3>Parceiros</h3>
+            <p className="card-number">{summary.partners.total}</p>
+            <p className="card-detail">
+              <span className="highlight">{summary.partners.active}</span> ativos
+            </p>
           </div>
         </div>
-
-        <div className="card recent-attendances">
-          <h2>Atendimentos Recentes</h2>
-          <ul className="attendance-list">
-            {recentAttendances.map(attendance => (
-              <li key={attendance.id} className={`attendance-item status-${attendance.status.toLowerCase().replace(' ', '-')}`}>
-                <div className="attendance-header">
-                  <span className="client-name">{attendance.client_name}</span>
-                  <span className="attendance-date">{attendance.created_at}</span>
-                </div>
-                <div className="attendance-subject">{attendance.subject}</div>
-                <div className="attendance-status">{attendance.status}</div>
-              </li>
-            ))}
-          </ul>
-          <div className="card-actions">
-            <Link to="/crm/attendances" className="btn">
-              Ver Todos
-            </Link>
-            <Link to="/crm/attendances/new" className="btn">
-              Novo Atendimento
-            </Link>
+        
+        <div className="summary-card">
+          <div className="card-icon receivables">
+            <FaMoneyBillWave />
+          </div>
+          <div className="card-content">
+            <h3>Recebíveis</h3>
+            <p className="card-number">{summary.financial.receivables.open + summary.financial.receivables.overdue + summary.financial.receivables.paid}</p>
+            <p className="card-detail">
+              <span className="highlight">{summary.financial.receivables.overdue}</span> em atraso
+            </p>
+          </div>
+        </div>
+        
+        <div className="summary-card">
+          <div className="card-icon payables">
+            <FaMoneyBillWave />
+          </div>
+          <div className="card-content">
+            <h3>Pagamentos</h3>
+            <p className="card-number">{summary.financial.payables.open + summary.financial.payables.overdue + summary.financial.payables.paid}</p>
+            <p className="card-detail">
+              <span className="highlight">{summary.financial.payables.overdue}</span> em atraso
+            </p>
+          </div>
+        </div>
+        
+        <div className="summary-card">
+          <div className="card-icon attendance">
+            <FaHeadset />
+          </div>
+          <div className="card-content">
+            <h3>Atendimentos</h3>
+            <p className="card-number">{summary.attendance.open + summary.attendance.inProgress + summary.attendance.closed}</p>
+            <p className="card-detail">
+              <span className="highlight">{summary.attendance.open}</span> abertos
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="dashboard-charts">
+        <div className="chart-container">
+          <h3>Financeiro</h3>
+          <div className="chart">
+            <Pie data={financialData} />
+          </div>
+        </div>
+        
+        <div className="chart-container">
+          <h3>Histórico Mensal</h3>
+          <div className="chart">
+            <Line 
+              data={monthlyData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Receitas x Despesas'
+                  },
+                },
+              }}
+            />
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

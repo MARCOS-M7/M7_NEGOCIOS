@@ -1,50 +1,64 @@
 
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
-// Configuração da conexão com o banco de dados
-export const sequelize = new Sequelize({
+// Configuração do Supabase
+export const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+// Configuração do Sequelize
+const dbConfig = {
   dialect: 'postgres',
-  host: process.env.DB_HOST || 'db.your-supabase-project.supabase.co',
-  port: process.env.DB_PORT || 5432,
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'your-database-password',
-  database: process.env.DB_NAME || 'postgres',
+  host: process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).hostname : 'localhost',
+  port: 5432,
+  username: 'postgres',
+  password: process.env.SUPABASE_SERVICE_KEY || '',
+  database: 'postgres',
   dialectOptions: {
     ssl: {
       require: true,
       rejectUnauthorized: false
     }
   },
-  logging: false
-});
+  logging: process.env.NODE_ENV === 'development' ? console.log : false
+};
 
-// Importar modelos
-import { User } from './user.js';
-import { Partner } from './partner.js';
-import { Receivable } from './receivable.js';
-import { Payable } from './payable.js';
-import { Attendance } from './attendance.js';
-import { Notification } from './notification.js';
-import { AuditLog } from './auditLog.js';
+export const sequelize = new Sequelize(
+  dbConfig.database,
+  dbConfig.username,
+  dbConfig.password,
+  {
+    host: dbConfig.host,
+    dialect: dbConfig.dialect,
+    port: dbConfig.port,
+    dialectOptions: dbConfig.dialectOptions,
+    logging: dbConfig.logging
+  }
+);
 
-// Definir relações
-User.belongsTo(Partner, { foreignKey: 'partner_id' });
-Partner.hasMany(User, { foreignKey: 'partner_id' });
+// Função para inicializar o banco de dados
+export const initDatabase = async () => {
+  try {
+    // Testar a conexão
+    await sequelize.authenticate();
+    console.log('Conexão com o banco de dados estabelecida com sucesso.');
 
-Partner.hasMany(Receivable, { foreignKey: 'partner_id' });
-Receivable.belongsTo(Partner, { foreignKey: 'partner_id' });
+    // Sincronizar os modelos com o banco de dados
+    // Em ambiente de produção, remova o { force: true } para evitar perda de dados
+    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
+    console.log('Modelos sincronizados com o banco de dados.');
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao conectar com o banco de dados:', error);
+    return false;
+  }
+};
 
-Partner.hasMany(Payable, { foreignKey: 'partner_id' });
-Payable.belongsTo(Partner, { foreignKey: 'partner_id' });
-
-Partner.hasMany(Attendance, { foreignKey: 'partner_id' });
-Attendance.belongsTo(Partner, { foreignKey: 'partner_id' });
-
-User.hasMany(Notification, { foreignKey: 'user_id' });
-Notification.belongsTo(User, { foreignKey: 'user_id' });
-
-// Exportar modelos
-export { User, Partner, Receivable, Payable, Attendance, Notification, AuditLog };
+// Importar e associar os modelos
+// As importações serão feitas nos respectivos arquivos dos modelos para evitar dependências circulares
