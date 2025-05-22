@@ -15,7 +15,7 @@ run = ["sh", "-c", "cd backend && npm install && npm start"]
 deploymentTarget = "cloudrun"
 
 [workflows]
-runButton = "Run Backend"
+runButton = "Start Full System"
 
 [[workflows.workflow]]
 name = "Run Backend"
@@ -34,3 +34,20 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd frontend && npm install && npm start"
+
+[[workflows.workflow]]
+name = "Start Full System"
+author = 42744750
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && npm install && npm start"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm install && npm start"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
