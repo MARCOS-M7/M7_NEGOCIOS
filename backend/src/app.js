@@ -2,14 +2,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { sequelize } from './models/index.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
 import financialRoutes from './routes/financialRoutes.js';
 import crmRoutes from './routes/crmRoutes.js';
-import { sequelize } from './models/index.js';
 
-// Carregar variáveis de ambiente
 dotenv.config();
 
 const app = express();
@@ -19,29 +18,29 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
-// Rotas
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/financial', financialRoutes);
 app.use('/api/crm', crmRoutes);
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Servidor funcionando' });
+// Rota de teste
+app.get('/', (req, res) => {
+  res.json({ message: 'API do M7 NEG funcionando!' });
 });
 
 // Iniciar servidor
 const startServer = async () => {
   try {
-    // Sincronizar modelos com o banco de dados
-    await sequelize.sync({ alter: true });
-    console.log('Banco de dados sincronizado');
+    await sequelize.authenticate();
+    console.log('Conexão com o banco de dados estabelecida com sucesso.');
     
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Servidor rodando em http://0.0.0.0:${PORT}`);
     });
   } catch (error) {
-    console.error('Erro ao iniciar servidor:', error);
+    console.error('Erro ao conectar com o banco de dados:', error);
   }
 };
 
